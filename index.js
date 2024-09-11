@@ -26,6 +26,23 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    const craftItemCollection = client.db('CheerCraftDB').collection('craftItems');
+
+    // craft-item post api
+    app.post('/craft-items', async (req, res) => {
+      const craftItem = req.body;
+      const result = await craftItemCollection.insertOne(craftItem);
+      res.send(result);
+    });
+
+    // Craft-item get api
+    app.get('/craft-items', async(req, res) => {
+      const result = await craftItemCollection.find().toArray();
+      res.send(result);
+    })
+
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
