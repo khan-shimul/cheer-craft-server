@@ -1,7 +1,7 @@
 const express = require ('express');
 const cors = require ('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -27,6 +27,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     const craftItemCollection = client.db('CheerCraftDB').collection('craftItems');
+    const craftItemSubCategoriesCollection = client.db('CheerCraftDB').collection('subCategories');
 
     // craft-item post api
     app.post('/craft-items', async (req, res) => {
@@ -35,11 +36,64 @@ async function run() {
       res.send(result);
     });
 
-    // Craft-item get api
+    // Craft all items get api
     app.get('/craft-items', async(req, res) => {
       const result = await craftItemCollection.find().toArray();
       res.send(result);
-    })
+    });
+
+    // craft single item get api
+    app.get('/craft-item/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId (id)};
+      const craftItem = await craftItemCollection.findOne(query);
+      res.send(craftItem);
+    });
+
+    // Craft Item Update Api
+    app.put('/craft-item/:id', async(req, res) => {
+      const id = req.params.id;
+      const newCraftItem = req.body;
+      const filter = {_id: new ObjectId(id)};
+      const options = {upsert: true};
+      const updateCraftItem = {
+        $set: {
+          image: newCraftItem.image,
+          itemName: newCraftItem.itemName,
+          subCategoryName: newCraftItem.subCategoryName,
+          price: newCraftItem.price,
+          description: newCraftItem.description,
+          rating: newCraftItem.rating,
+          customization: newCraftItem.customization,
+          processingTime: newCraftItem.processingTime,
+          stockStatus: newCraftItem.stockStatus,
+        }
+      };
+      const result = await craftItemCollection.updateOne(filter, updateCraftItem, options);
+      res.send(result);
+    });
+
+    // Delete Craft Item
+    app.delete('/craft-item/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await craftItemCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // Sub-categories get api
+    app.get('/craft/sub-categories', async (req, res) => {
+      const result = await craftItemSubCategoriesCollection.find().toArray();
+      res.send(result);
+    });
+
+    // Sub-categories filtered api
+    app.get('/sub-categories/:name', async(req, res) => {
+      const subCategoryName = req.params.name;
+      const filter = {subCategoryName: subCategoryName};
+      const result = await craftItemCollection.find(filter).toArray();
+      res.send(result);
+    } );
 
 
 
